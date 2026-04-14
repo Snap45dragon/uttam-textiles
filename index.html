@@ -276,10 +276,14 @@ async function pushToSheets(action, payload) {
     await fetch(scriptUrl, {
       method: 'POST',
       body: JSON.stringify({ action, ...payload }),
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      redirect: 'follow'
     });
     setSynced(true);
-  } catch(e) { setSynced(false); }
+  } catch(e) { 
+    console.error("POST Error:", e);
+    setSynced(false); 
+  }
 }
 
 function setSynced(ok) {
