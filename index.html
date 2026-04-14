@@ -262,13 +262,9 @@ async function fetchFromSheets() {
     const cacheBuster = new Date().getTime(); 
     const fetchUrl = `${scriptUrl}?action=getAll&t=${cacheBuster}`;
     
-    const res = await fetch(fetchUrl, {
-      method: 'GET',
-      redirect: 'follow', // Follow the 302 redirect
-      headers: {
-        'Accept': 'application/json' // Tell the browser we expect the JSON from the redirect
-      }
-    });
+    // Completely bare fetch. 
+    // It defaults to GET, follows redirects, and sends no custom headers.
+    const res = await fetch(fetchUrl); 
     
     const data = await res.json();
     if (data.orders) {
