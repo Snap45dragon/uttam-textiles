@@ -259,7 +259,17 @@ function saveLocal() { localStorage.setItem(STORAGE_KEY, JSON.stringify(orders))
 async function fetchFromSheets() {
   if (!scriptUrl) return;
   try {
-    const res = await fetch(scriptUrl + '?action=getAll');
+    const cacheBuster = new Date().getTime(); 
+    const fetchUrl = `${scriptUrl}?action=getAll&t=${cacheBuster}`;
+    
+    const res = await fetch(fetchUrl, {
+      method: 'GET',
+      redirect: 'follow', // Follow the 302 redirect
+      headers: {
+        'Accept': 'application/json' // Tell the browser we expect the JSON from the redirect
+      }
+    });
+    
     const data = await res.json();
     if (data.orders) {
       orders = data.orders;
@@ -267,7 +277,10 @@ async function fetchFromSheets() {
       render();
       setSynced(true);
     }
-  } catch(e) { setSynced(false); }
+  } catch(e) { 
+    console.error("GET Error:", e);
+    setSynced(false); 
+  }
 }
 
 async function pushToSheets(action, payload) {
