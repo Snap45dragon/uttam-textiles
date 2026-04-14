@@ -262,22 +262,32 @@ async function fetchFromSheets() {
     const cacheBuster = new Date().getTime(); 
     const fetchUrl = `${scriptUrl}?action=getAll&t=${cacheBuster}`;
     
-    const res = await fetch(fetchUrl, {
-      method: 'GET',
-      redirect: 'follow',
-      mode: 'cors',                  // Force CORS mode
-      referrerPolicy: 'no-referrer'  // Stops the browser from blocking the redirect
-    });
+    console.log("1. Sending request to:", fetchUrl);
     
-    const data = await res.json();
+    // Using the simplest fetch setup
+    const res = await fetch(fetchUrl);
+    
+    console.log("2. Response received! Status:", res.status);
+    
+    // Grab the raw text instead of forcing JSON right away
+    const text = await res.text(); 
+    console.log("3. RAW GOOGLE RESPONSE:", text);
+    
+    // Now try to convert it to JSON
+    const data = JSON.parse(text);
+    
     if (data.orders) {
+      console.log("4. Success! Orders found:", data.orders.length);
       orders = data.orders;
       saveLocal();
       render();
       setSynced(true);
+    } else {
+      console.warn("4. Data parsed, but no 'orders' found inside:", data);
+      setSynced(false); // Likely returning an { error: "..." } JSON
     }
   } catch(e) { 
-    console.error("GET Error Details:", e); // Check the Console tab for the real error!
+    console.error("GET Error Details:", e);
     setSynced(false); 
   }
 }
