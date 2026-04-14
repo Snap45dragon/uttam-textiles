@@ -262,9 +262,12 @@ async function fetchFromSheets() {
     const cacheBuster = new Date().getTime(); 
     const fetchUrl = `${scriptUrl}?action=getAll&t=${cacheBuster}`;
     
-    // Completely bare fetch. 
-    // It defaults to GET, follows redirects, and sends no custom headers.
-    const res = await fetch(fetchUrl); 
+    const res = await fetch(fetchUrl, {
+      method: 'GET',
+      redirect: 'follow',
+      mode: 'cors',                  // Force CORS mode
+      referrerPolicy: 'no-referrer'  // Stops the browser from blocking the redirect
+    });
     
     const data = await res.json();
     if (data.orders) {
@@ -274,7 +277,7 @@ async function fetchFromSheets() {
       setSynced(true);
     }
   } catch(e) { 
-    console.error("GET Error:", e);
+    console.error("GET Error Details:", e); // Check the Console tab for the real error!
     setSynced(false); 
   }
 }
