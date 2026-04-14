@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Uttam Textiles — Orders</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --surface2: #f0efe9;
+  --border: #e0ddd6;
+  --border2: #cccac2;
+  --text: #1a1917;
+  --text2: #6b6860;
+  --text3: #9e9c96;
+  --blue: #185FA5;
+  --blue-bg: #e6f1fb;
+  --blue-text: #0c447c;
+  --amber: #854F0B;
+  --amber-bg: #faeeda;
+  --amber-text: #633806;
+  --green: #3B6D11;
+  --green-bg: #eaf3de;
+  --green-text: #27500a;
+  --red: #A32D2D;
+  --red-bg: #fcebeb;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* Layout */
+.app { max-width: 680px; margin: 0 auto; padding: 24px 16px 60px; }
+
+/* Header */
+.header { margin-bottom: 24px; }
+.header-top { display: flex; align-items: flex-start; justify-content: space-between; }
+.brand { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); margin-bottom: 4px; }
+.page-title { font-size: 24px; font-weight: 600; color: var(--text); }
+.sync-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text3); margin-top: 6px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border2); flex-shrink: 0; }
+.dot.live { background: #639922; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* Setup banner */
+.setup-banner { background: var(--blue-bg); border: 1px solid #b5d4f4; border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.setup-banner p { font-size: 13px; color: var(--blue-text); line-height: 1.4; }
+.setup-banner p strong { font-weight: 600; display: block; margin-bottom: 2px; }
+.btn-setup { background: var(--blue); color: #fff; border: none; padding: 7px 14px; border-radius: var(--radius-sm); font-size: 12px; font-family: inherit; cursor: pointer; white-space: nowrap; font-weight: 500; }
+
+/* Date navigator */
+.date-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+.date-nav-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface); cursor: pointer; font-size: 18px; color: var(--text2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
+.date-nav-btn:hover { border-color: var(--border2); background: var(--surface2); }
+.date-label-wrap { position: relative; flex: 1; }
+.date-label { width: 100%; padding: 8px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 15px; font-weight: 500; color: var(--text); cursor: pointer; text-align: center; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.date-label:hover { border-color: var(--border2); }
+.date-label svg { width: 14px; height: 14px; opacity: 0.5; }
+.today-btn { font-size: 12px; font-weight: 500; color: var(--blue); background: var(--blue-bg); border: none; padding: 5px 10px; border-radius: 20px; cursor: pointer; font-family: inherit; white-space: nowrap; }
+
+/* Calendar popup */
+.cal-popup { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 200; background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius); padding: 14px; display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.10); }
+.cal-popup.open { display: block; }
+.cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.cal-header span { font-size: 13px; font-weight: 600; color: var(--text); }
+.cal-header button { background: none; border: none; cursor: pointer; color: var(--text2); font-size: 18px; line-height: 1; padding: 2px 6px; border-radius: 4px; }
+.cal-header button:hover { background: var(--surface2); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.cal-dn { font-size: 10px; font-weight: 500; color: var(--text3); text-align: center; padding: 4px 0; letter-spacing: 0.05em; }
+.cal-d { font-size: 12px; text-align: center; padding: 6px 2px; border-radius: 6px; cursor: pointer; color: var(--text); transition: background 0.1s; }
+.cal-d:hover { background: var(--surface2); }
+.cal-d.today { font-weight: 600; color: var(--blue); }
+.cal-d.sel { background: var(--blue) !important; color: #fff !important; }
+.cal-d.has-orders::after { content: ''; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--amber); margin: 1px auto 0; }
+.cal-d.empty { cursor: default; }
+
+/* Summary cards */
+.summary { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; margin-bottom: 24px; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; }
+.stat-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3); margin-bottom: 6px; }
+.stat-value { font-size: 26px; font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; }
+.stat-value.warn { color: var(--amber); }
+
+/* Section */
+.section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 12px; }
+
+/* Add button */
+.add-btn { width: 100%; padding: 12px; background: var(--surface); border: 1.5px dashed var(--border2); border-radius: var(--radius); font-size: 14px; font-weight: 500; color: var(--text2); cursor: pointer; font-family: inherit; margin-bottom: 14px; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.add-btn:hover { background: var(--surface2); border-color: var(--blue); color: var(--blue); }
+
+/* Cards */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 10px; transition: box-shadow 0.15s; }
+.card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+.card.overdue { border-left: 3px solid var(--amber); }
+.card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.party-name { font-size: 15px; font-weight: 600; color: var(--text); }
+.party-loc { font-size: 12px; color: var(--text3); margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+.goods-text { font-size: 13px; color: var(--text2); line-height: 1.5; margin-bottom: 12px; padding: 8px 10px; background: var(--surface2); border-radius: 6px; }
+.card-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--border); padding-top: 10px; }
+.badge { font-size: 11px; font-weight: 600; padding: 4px 11px; border-radius: 20px; letter-spacing: 0.03em; }
+.badge.pending { background: var(--amber-bg); color: var(--amber); }
+.badge.packed { background: var(--blue-bg); color: var(--blue); }
+.badge.despatched { background: var(--green-bg); color: var(--green); }
+.reminder-tag { font-size: 11px; color: var(--amber); background: var(--amber-bg); padding: 3px 9px; border-radius: 20px; font-weight: 500; }
+.action-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.action-btn { font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border2); background: var(--surface2); cursor: pointer; color: var(--text2); font-family: inherit; transition: all 0.1s; }
+.action-btn:hover { background: var(--surface); border-color: var(--text3); color: var(--text); }
+.action-btn.danger:hover { background: var(--red-bg); border-color: #f09595; color: var(--red); }
+.order-meta { font-size: 11px; color: var(--text3); }
+
+/* Empty state */
+.empty { text-align: center; padding: 40px 20px; color: var(--text3); }
+.empty-icon { font-size: 32px; margin-bottom: 8px; }
+.empty p { font-size: 14px; }
+
+/* Modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 500; align-items: center; justify-content: center; padding: 16px; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--surface); border-radius: var(--radius); padding: 24px; width: 100%; max-width: 420px; border: 1px solid var(--border); }
+.modal-title { font-size: 17px; font-weight: 600; color: var(--text); margin-bottom: 20px; }
+.form-group { margin-bottom: 14px; }
+.form-group label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text3); display: block; margin-bottom: 5px; }
+.form-group input, .form-group select, .form-group textarea { width: 100%; padding: 9px 12px; border: 1px solid var(--border2); border-radius: var(--radius-sm); font-size: 14px; font-family: inherit; color: var(--text); background: var(--bg); outline: none; transition: border 0.15s; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--blue); background: var(--surface); }
+.form-group textarea { height: 80px; resize: vertical; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+.btn-primary { background: var(--blue); color: #fff; border: none; padding: 9px 20px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; }
+.btn-primary:hover { background: var(--blue-text); }
+.btn-cancel { background: var(--surface2); border: 1px solid var(--border2); padding: 9px 20px; border-radius: var(--radius-sm); font-size: 14px; font-family: inherit; cursor: pointer; color: var(--text2); }
+
+/* Setup modal */
+.setup-info { font-size: 12px; color: var(--text2); line-height: 1.6; margin-bottom: 16px; background: var(--surface2); padding: 12px; border-radius: var(--radius-sm); }
+.setup-info ol { padding-left: 16px; }
+.setup-info li { margin-bottom: 4px; }
+.setup-info code { font-family: 'DM Mono', monospace; font-size: 11px; background: var(--border); padding: 1px 4px; border-radius: 3px; }
+
+/* Overdue alert */
+.overdue-alert { background: var(--amber-bg); border: 1px solid #fac775; border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--amber-text); display: none; }
+.overdue-alert strong { font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="brand">Uttam Textiles · Godown Street, Chennai</div>
+        <div class="page-title">Incoming Orders</div>
+      </div>
+    </div>
+    <div class="sync-status">
+      <div class="dot" id="sync-dot"></div>
+      <span id="sync-label">Not connected to Google Sheets</span>
+    </div>
+  </div>
+
+  <div class="setup-banner" id="setup-banner">
+    <p><strong>Connect Google Sheets for team sync</strong>After deploying your Apps Script, paste the URL here to sync across all devices.</p>
+    <button class="btn-setup" onclick="openSetup()">Connect</button>
+  </div>
+
+  <div class="overdue-alert" id="overdue-alert"></div>
+
+  <div class="date-nav">
+    <button class="date-nav-btn" onclick="changeDay(-1)" title="Previous day">&#8249;</button>
+    <div class="date-label-wrap">
+      <div class="date-label" onclick="toggleCal()" id="date-label">
+        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1" y="2" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M1 6h14" stroke="currentColor" stroke-width="1.5"/><path d="M5 1v2M11 1v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span id="date-text"></span>
+      </div>
+      <div class="cal-popup" id="cal-popup"></div>
+    </div>
+    <button class="today-btn" onclick="goToday()">Today</button>
+    <button class="date-nav-btn" onclick="changeDay(1)" title="Next day">&#8250;</button>
+  </div>
+
+  <div class="summary" id="summary"></div>
+
+  <div class="section-label" id="section-label"></div>
+  <button class="add-btn" onclick="openModal()">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    Add new order
+  </button>
+  <div id="cards"></div>
+</div>
+
+<!-- Order modal -->
+<div class="modal-overlay" id="order-modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">New order</div>
+    <div class="form-group"><label>Party name *</label><input id="f-party" type="text" placeholder="e.g. Pachaiyappa Silks" /></div>
+    <div class="form-group"><label>Location</label><input id="f-loc" type="text" placeholder="e.g. T. Nagar, Chennai" /></div>
+    <div class="form-group"><label>Goods ordered</label><textarea id="f-goods" placeholder="e.g. 20m Cotton Voile, 15m Brocade"></textarea></div>
+    <div class="form-group"><label>Status</label>
+      <select id="f-status">
+        <option value="pending">Pending</option>
+        <option value="packed">Packed</option>
+        <option value="despatched">Despatched</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Added by</label><input id="f-addedby" type="text" placeholder="Your name" /></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('order-modal')">Cancel</button>
+      <button class="btn-primary" onclick="saveOrder()">Save order</button>
+    </div>
+  </div>
+</div>
+
+<!-- Setup modal -->
+<div class="modal-overlay" id="setup-modal">
+  <div class="modal">
+    <div class="modal-title">Connect Google Sheets</div>
+    <div class="setup-info">
+      <ol>
+        <li>Create a Google Sheet with columns: <code>id, date, party, location, goods, status, addedBy</code></li>
+        <li>Go to <strong>Extensions → Apps Script</strong></li>
+        <li>Paste the <code>uttam_orders_script.gs</code> code and save</li>
+        <li>Click <strong>Deploy → New deployment → Web App</strong></li>
+        <li>Set <em>Execute as: Me</em> and <em>Access: Anyone</em></li>
+        <li>Copy the Web App URL and paste below</li>
+      </ol>
+    </div>
+    <div class="form-group"><label>Apps Script Web App URL</label><input id="f-script-url" type="url" placeholder="https://script.google.com/macros/s/.../exec" /></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('setup-modal')">Cancel</button>
+      <button class="btn-primary" onclick="saveSetup()">Save &amp; connect</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'uttam_orders_v2';
+const SCRIPT_KEY = 'uttam_script_url';
+const NAME_KEY = 'uttam_user_name';
+
+let orders = [];
+let selectedDate = new Date(); selectedDate.setHours(0,0,0,0);
+let calDate = new Date(selectedDate);
+let editingId = null;
+let scriptUrl = localStorage.getItem(SCRIPT_KEY) || '';
+let syncInterval = null;
+
+function dateKey(d) { return d.toISOString().split('T')[0]; }
+function fmtDate(d) { return d.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); }
+function fmtShort(d) { return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }); }
+function daysBetween(dateStr) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  return Math.floor((today - new Date(dateStr)) / 86400000);
+}
+
+function loadLocal() {
+  try { orders = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) { orders = []; }
+}
+function saveLocal() { localStorage.setItem(STORAGE_KEY, JSON.stringify(orders)); }
+
+async function fetchFromSheets() {
+  if (!scriptUrl) return;
+  try {
+    const res = await fetch(scriptUrl + '?action=getAll');
+    const data = await res.json();
+    if (data.orders) {
+      orders = data.orders;
+      saveLocal();
+      render();
+      setSynced(true);
+    }
+  } catch(e) { setSynced(false); }
+}
+
+async function pushToSheets(action, payload) {
+  if (!scriptUrl) return;
+  try {
+    await fetch(scriptUrl, {
+      method: 'POST',
+      body: JSON.stringify({ action, ...payload }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    setSynced(true);
+  } catch(e) { setSynced(false); }
+}
+
+function setSynced(ok) {
+  const dot = document.getElementById('sync-dot');
+  const label = document.getElementById('sync-label');
+  dot.className = 'dot' + (ok ? ' live' : '');
+  label.textContent = ok ? 'Synced with Google Sheets' : 'Sync error — check connection';
+}
+
+function changeDay(n) { selectedDate.setDate(selectedDate.getDate() + n); calDate = new Date(selectedDate); render(); }
+function goToday() { selectedDate = new Date(); selectedDate.setHours(0,0,0,0); calDate = new Date(selectedDate); render(); }
+
+function toggleCal() {
+  const p = document.getElementById('cal-popup');
+  p.classList.toggle('open');
+  if (p.classList.contains('open')) renderCal();
+}
+
+function renderCal() {
+  const p = document.getElementById('cal-popup');
+  const y = calDate.getFullYear(), m = calDate.getMonth();
+  const mn = calDate.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+  const first = new Date(y, m, 1).getDay();
+  const days = new Date(y, m + 1, 0).getDate();
+  const today = new Date(); today.setHours(0,0,0,0);
+  const orderDates = new Set(orders.map(o => o.date));
+  let h = `<div class="cal-header"><button onclick="calMove(-1)">&#8249;</button><span>${mn}</span><button onclick="calMove(1)">&#8250;</button></div><div class="cal-grid">`;
+  ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d => h += `<div class="cal-dn">${d}</div>`);
+  for (let i = 0; i < first; i++) h += `<div class="cal-d empty"></div>`;
+  for (let d = 1; d <= days; d++) {
+    const dd = new Date(y, m, d); dd.setHours(0,0,0,0);
+    const k = dateKey(dd);
+    const isTod = dd.getTime() === today.getTime();
+    const isSel = dd.getTime() === selectedDate.getTime();
+    const hasOrders = orderDates.has(k);
+    h += `<div class="cal-d${isTod?' today':''}${isSel?' sel':''}${hasOrders?' has-orders':''}" onclick="pickDay(${y},${m},${d})">${d}</div>`;
+  }
+  h += '</div>';
+  p.innerHTML = h;
+}
+
+function calMove(n) { calDate.setMonth(calDate.getMonth() + n); renderCal(); }
+function pickDay(y, m, d) { selectedDate = new Date(y, m, d); document.getElementById('cal-popup').classList.remove('open'); render(); }
+
+function openModal(id) {
+  editingId = id || null;
+  document.getElementById('modal-title').textContent = id ? 'Edit order' : 'New order';
+  const savedName = localStorage.getItem(NAME_KEY) || '';
+  if (id) {
+    const o = orders.find(x => x.id === id);
+    document.getElementById('f-party').value = o.party || '';
+    document.getElementById('f-loc').value = o.location || '';
+    document.getElementById('f-goods').value = o.goods || '';
+    document.getElementById('f-status').value = o.status || 'pending';
+    document.getElementById('f-addedby').value = o.addedBy || savedName;
+  } else {
+    document.getElementById('f-party').value = '';
+    document.getElementById('f-loc').value = '';
+    document.getElementById('f-goods').value = '';
+    document.getElementById('f-status').value = 'pending';
+    document.getElementById('f-addedby').value = savedName;
+  }
+  document.getElementById('order-modal').classList.add('open');
+  setTimeout(() => document.getElementById('f-party').focus(), 100);
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+async function saveOrder() {
+  const party = document.getElementById('f-party').value.trim();
+  if (!party) { document.getElementById('f-party').focus(); return; }
+  const addedBy = document.getElementById('f-addedby').value.trim();
+  if (addedBy) localStorage.setItem(NAME_KEY, addedBy);
+
+  const orderData = {
+    party,
+    location: document.getElementById('f-loc').value.trim(),
+    goods: document.getElementById('f-goods').value.trim(),
+    status: document.getElementById('f-status').value,
+    addedBy: addedBy || 'Team'
+  };
+
+  if (editingId) {
+    const o = orders.find(x => x.id === editingId);
+    Object.assign(o, orderData);
+    saveLocal();
+    await pushToSheets('update', { order: o });
+  } else {
+    const newOrder = { id: Date.now().toString(), date: dateKey(selectedDate), ...orderData };
+    orders.push(newOrder);
+    saveLocal();
+    await pushToSheets('add', { order: newOrder });
+  }
+
+  closeModal('order-modal');
+  render();
+}
+
+async function updateStatus(id, status) {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  o.status = status;
+  saveLocal();
+  render();
+  await pushToSheets('update', { order: o });
+}
+
+async function deleteOrder(id) {
+  if (!confirm('Delete this order?')) return;
+  orders = orders.filter(x => x.id !== id);
+  saveLocal();
+  render();
+  await pushToSheets('delete', { id });
+}
+
+function openSetup() {
+  document.getElementById('f-script-url').value = scriptUrl;
+  document.getElementById('setup-modal').classList.add('open');
+}
+
+async function saveSetup() {
+  const url = document.getElementById('f-script-url').value.trim();
+  if (!url) return;
+  scriptUrl = url;
+  localStorage.setItem(SCRIPT_KEY, url);
+  closeModal('setup-modal');
+  document.getElementById('setup-banner').style.display = 'none';
+  await fetchFromSheets();
+  if (syncInterval) clearInterval(syncInterval);
+  syncInterval = setInterval(fetchFromSheets, 30000);
+}
+
+function render() {
+  const key = dateKey(selectedDate);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const isToday = selectedDate.getTime() === today.getTime();
+
+  document.getElementById('date-text').textContent = isToday ? 'Today — ' + fmtShort(selectedDate) : fmtShort(selectedDate);
+  document.getElementById('section-label').textContent = `Orders on ${fmtShort(selectedDate)}`;
+
+  const dayOrders = orders.filter(o => o.date === key);
+  const allPending = orders.filter(o => o.status === 'pending');
+  const overdue = allPending.filter(o => daysBetween(o.date) > 2);
+  const totalToday = dayOrders.length;
+
+  document.getElementById('summary').innerHTML = `
+    <div class="stat"><div class="stat-label">Today's orders</div><div class="stat-value">${orders.filter(o=>o.date===dateKey(today)).length}</div></div>
+    <div class="stat"><div class="stat-label">Pending</div><div class="stat-value">${allPending.length}</div></div>
+    <div class="stat"><div class="stat-label">Overdue</div><div class="stat-value warn">${overdue.length}</div></div>
+  `;
+
+  const alert = document.getElementById('overdue-alert');
+  if (overdue.length > 0) {
+    alert.style.display = 'block';
+    alert.innerHTML = `<strong>Reminder:</strong> ${overdue.length} order${overdue.length>1?'s are':' is'} pending for more than 2 days — ${overdue.map(o=>'<strong>'+o.party+'</strong>').join(', ')}.`;
+  } else {
+    alert.style.display = 'none';
+  }
+
+  const cards = document.getElementById('cards');
+  if (dayOrders.length === 0) {
+    cards.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><p>No orders for this date</p></div>`;
+    return;
+  }
+
+  cards.innerHTML = dayOrders.map(o => {
+    const days = daysBetween(o.date);
+    const isOverdue = o.status === 'pending' && days > 2;
+    const reminderHtml = isOverdue ? `<span class="reminder-tag">Pending ${days} day${days>1?'s':''}</span>` : `<span class="order-meta">${o.addedBy ? 'By '+o.addedBy : ''}</span>`;
+    return `
+    <div class="card${isOverdue?' overdue':''}">
+      <div class="card-top">
+        <div>
+          <div class="party-name">${o.party}</div>
+          ${o.location ? `<div class="party-loc">📍 ${o.location}</div>` : ''}
+        </div>
+        <span class="badge ${o.status}">${o.status.charAt(0).toUpperCase()+o.status.slice(1)}</span>
+      </div>
+      ${o.goods ? `<div class="goods-text">${o.goods}</div>` : ''}
+      <div class="card-footer">
+        ${reminderHtml}
+        <div class="action-btns">
+          <button class="action-btn" onclick="openModal('${o.id}')">Edit</button>
+          ${o.status !== 'packed' ? `<button class="action-btn" onclick="updateStatus('${o.id}','packed')">Mark packed</button>` : ''}
+          ${o.status !== 'despatched' ? `<button class="action-btn" onclick="updateStatus('${o.id}','despatched')">Despatch</button>` : ''}
+          <button class="action-btn danger" onclick="deleteOrder('${o.id}')">Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+document.addEventListener('click', e => {
+  const popup = document.getElementById('cal-popup');
+  const label = document.getElementById('date-label');
+  if (!popup.contains(e.target) && !label.contains(e.target)) popup.classList.remove('open');
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.getElementById('order-modal').classList.remove('open');
+    document.getElementById('setup-modal').classList.remove('open');
+    document.getElementById('cal-popup').classList.remove('open');
+  }
+});
+
+loadLocal();
+if (scriptUrl) {
+  document.getElementById('setup-banner').style.display = 'none';
+  fetchFromSheets();
+  syncInterval = setInterval(fetchFromSheets, 30000);
+}
+render();
+</script>
+</body>
+</html>
