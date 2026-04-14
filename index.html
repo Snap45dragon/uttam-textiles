@@ -240,7 +240,7 @@ let orders = [];
 let selectedDate = new Date(); selectedDate.setHours(0,0,0,0);
 let calDate = new Date(selectedDate);
 let editingId = null;
-let scriptUrl = localStorage.getItem(SCRIPT_KEY) || '';
+let scriptUrl = 'https://script.google.com/macros/s/AKfycbxjlClE2nA2OtZDVSmks8OI97vfdl4j0wY-bjlLtZxgHZBjMCprCOOpKKWHFEcbBfjI/exec';
 let syncInterval = null;
 
 function dateKey(d) { return d.toISOString().split('T')[0]; }
