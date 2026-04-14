@@ -259,35 +259,34 @@ function saveLocal() { localStorage.setItem(STORAGE_KEY, JSON.stringify(orders))
 async function fetchFromSheets() {
   if (!scriptUrl) return;
   try {
-    const cacheBuster = new Date().getTime(); 
-    const fetchUrl = `${scriptUrl}?action=getAll&t=${cacheBuster}`;
-    
-    console.log("1. Sending request to:", fetchUrl);
-    
-    // Using the simplest fetch setup
+    const fetchUrl = `${scriptUrl}?action=getAll&t=${Date.now()}`;
     const res = await fetch(fetchUrl);
-    
-    console.log("2. Response received! Status:", res.status);
-    
-    // Grab the raw text instead of forcing JSON right away
     const text = await res.text(); 
-    console.log("3. RAW GOOGLE RESPONSE:", text);
-    
-    // Now try to convert it to JSON
     const data = JSON.parse(text);
     
     if (data.orders) {
-      console.log("4. Success! Orders found:", data.orders.length);
-      orders = data.orders;
+      // THE FIX: Normalize the dates coming from Google Sheets
+      orders = data.orders.map(o => {
+        // If the date is a long string, format it back to YYYY-MM-DD
+        if (o.date && o.date.length > 10) {
+          const d = new Date(o.date);
+          // Manually build the date to prevent IST/UTC timezone shifting
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          o.date = `${yyyy}-${mm}-${dd}`;
+        }
+        return o;
+      });
+      
       saveLocal();
-      render();
+      render(); // This will now successfully match the dates and display them!
       setSynced(true);
     } else {
-      console.warn("4. Data parsed, but no 'orders' found inside:", data);
-      setSynced(false); // Likely returning an { error: "..." } JSON
+      setSynced(false);
     }
   } catch(e) { 
-    console.error("GET Error Details:", e);
+    console.error("GET Error:", e);
     setSynced(false); 
   }
 }
